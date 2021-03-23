@@ -32,7 +32,7 @@ extern "C" {
 	fprintf(stderr, "ERROR: option `--%s' is missing argument\n", s)
 
 #define err_no_argument(s)         \
-	fprintf(stderr, "ERROR: option `--%s'is no argument\n", s)
+	fprintf(stderr, "ERROR: option `--%s' is no argument\n", s)
 
 #define err_incorrect_has_arg(s) \
 	fprintf(stderr, "ERROR: the `has_arg' field of `%s' should be one of:\n" \
@@ -67,6 +67,7 @@ struct boption {
 	char *name;
 	int has_arg;
 	int val;
+	char **value;
 };
 
 static int bgetopt(int argc, char * const *argv, const struct boption *opts)
@@ -74,15 +75,30 @@ static int bgetopt(int argc, char * const *argv, const struct boption *opts)
 	char *arg;
 	char *next_arg;
 
-	if (boptind >= argc)
+	if (boptind >= argc) {
+		struct boption *p = (struct boption *)opts;
+		while (p->name) {
+			if (boptctl == boptctl_exit) {
+				if (p->has_arg == brequired_argument) {
+					err_missing_argument(p->name);
+					exit(-1);
+				} else if (p->has_arg == bno_argument) {
+					err_no_argument(p->name);
+					exit(-1);
+				} else {
+				}
+			}
+			p++;
+		}
 		return -1;  /* Reach the end of ARGV */
+	}
 
  	arg = argv[boptind];
 	next_arg = argv[boptind + 1];
 
 	if (!(IS_OPTION_ARG(arg))) {
-		err_nonoption_argument(arg);
 		if (boptctl == boptctl_exit) {
+			err_nonoption_argument(arg);
 			exit(-1);
 		} else {
 			boptarg = argv[boptind];
@@ -101,8 +117,8 @@ static int bgetopt(int argc, char * const *argv, const struct boption *opts)
 	}
 
 	if (!opts->name) {
-		err_unknown_option(argv[boptind]);
 		if (boptctl == boptctl_exit) {
+			err_unknown_option(argv[boptind]);
 			exit(-1);
 		} else {
 			boptarg = argv[boptind];
@@ -114,8 +130,8 @@ static int bgetopt(int argc, char * const *argv, const struct boption *opts)
 	switch (opts->has_arg) {
 	case brequired_argument:
 		if (!next_arg || IS_OPTION_ARG(next_arg)) {
-			err_missing_argument(opts->name);
 			if (boptctl == boptctl_exit) {
+				err_missing_argument(opts->name);
 				exit(-1);
 			} else {
 				boptarg = argv[boptind];
@@ -146,8 +162,8 @@ static int bgetopt(int argc, char * const *argv, const struct boption *opts)
 			return opts->val;
 		}
 
-		err_no_argument(opts->name);
 		if (boptctl == boptctl_exit) {
+			err_no_argument(opts->name);
 			exit(-1);
 		} else {
 			boptarg = argv[boptind];
@@ -156,8 +172,8 @@ static int bgetopt(int argc, char * const *argv, const struct boption *opts)
 		}
 
 	default:
-		err_incorrect_has_arg(opts->name);
 		if (boptctl == boptctl_exit) {
+			err_incorrect_has_arg(opts->name);
 			exit(-1);
 		} else {
 			boptarg = argv[boptind];

@@ -22,6 +22,7 @@ options. The structure is:
         char *name;
         int has_arg;
         int val;
+	char **value;
     };
 
     The name field should contain the option name without the leading double dash.
