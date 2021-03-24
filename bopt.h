@@ -79,10 +79,10 @@ static int bgetopt(int argc, char * const *argv, const struct boption *opts)
 		struct boption *p = (struct boption *)opts;
 		while (p->name) {
 			if (boptctl == boptctl_exit) {
-				if (p->has_arg == brequired_argument) {
+				if (p->has_arg == brequired_argument && *(p->value) == NULL) {
 					err_missing_argument(p->name);
 					exit(-1);
-				} else if (p->has_arg == bno_argument) {
+				} else if (p->has_arg == bno_argument && p->value != NULL) {
 					err_no_argument(p->name);
 					exit(-1);
 				} else {
